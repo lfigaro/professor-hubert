@@ -1,0 +1,18 @@
+
+machine:
+  python:
+    version: 2.7.12
+
+dependencies:
+  override:
+  - pip install awscli
+
+test:
+  override:
+  - exit 0  # plz, add tests!
+
+deployment:
+  lambda:
+    branch: master
+    commands:
+    - sh deploy.sh
