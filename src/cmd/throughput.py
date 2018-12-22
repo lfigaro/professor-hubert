@@ -2,6 +2,13 @@
 
 from datetime import datetime, timedelta
 
+import json
+import logging
+logging.basicConfig()
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+
 class Throughput:
 
 	def __init__(self, repo, message):
@@ -9,20 +16,20 @@ class Throughput:
 		self.text = message
 
 	def execute(self):
-		data = self.repo.closed_issues(self.repo.get_repo(), fromDateObj=None, toDateObj=None, tags=[], average=None)
+		data = self.repo.closed_issues(fromDateObj=None, toDateObj=None, tags=[], average=None)
 
 		if 'message' in data and data['message'] == 'Not Found':
-			return 'Não existe nenhum time *' + squadRepo + '* no GitHub. Se deseja a vazão de outro time, ' + \
+			return 'Não existe nenhum time *' + self.repo.ghrepo + '* no GitHub. Se deseja a vazão de outro time, ' + \
 				   'é só perguntar "qual a vazão do time xxxxxx ?"'		
 
 		else:
 			if 'throughput' in data:
-				ret1 = 'Análise da *vazão* dos ultimos *7 dias* para o time *' + squadRepo + '*: \n'
+				ret1 = 'Análise da *vazão* dos ultimos *7 dias* para o time *' + self.repo.ghrepo + '*: \n'
 				ret2 = 'Histórias entregues por dia: '
 				ret4 = ':thumbsup: indica vazão *acima* da média, :thumbsdown: indica vazão *abaixo* da média \n'
 				thr = data['throughput']
 				keys = thr.keys()
-				sorted(keys)
+				keys.sort()
 				
 				first = None
 				last = None
@@ -63,9 +70,6 @@ class Throughput:
 					elif end > 0:
 						ret3 += 'O time está entregando *' + str(int(end)) + '% mais itens* do que nos 7 dias anteriores :smiley:\n'
 			
-			if simple == False:
-				ret = div + '\n' + ret1 + '\n' + ret3 + '\n' + ret2 + ret4 + '\n' + div
-			else:
-				ret = ret3
+			ret = ret1 + '\n' + ret3 + '\n' + ret2 + ret4
 			
 			return ret

@@ -1,0 +1,28 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Agile Metrics</title>
+		<link href="css/metricas.css" rel="stylesheet">
+		<script src="https://canvasjs.com/assets/script/jquery-1.11.1.min.js"></script>
+		<script src="https://canvasjs.com/assets/script/jquery.canvasjs.min.js"></script>
+		<script src="js/metricas_all.js"></script>
+	</head>
+	<body onload="printChart()">
+		<div class="filter">
+			<div class="filter-item">
+				<label>Date:</label>
+				<input type="date" name="toDate" id="toDate">
+			</div>
+			<div class="filter-item">
+				<label>Average Days:</label>
+				<input type="text" name="average" id="average">
+			</div>
+			<div class="filter-item">
+				<button type="button" name="update" id="update" onclick="printChart();">Update</button>
+			</div>
+		</div>
+		<div id="chartContainerST" class="chart" style="height: 600px;"></div>
+		<div id="chartContainerTH" class="chart" style="height: 600px;"></div>
+		<div id="chartContainerLT" class="chart" style="height: 600px;"></div>
+	</body>
+</html>   

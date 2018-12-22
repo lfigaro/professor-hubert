@@ -9,25 +9,25 @@ class Leadtime:
 		self.text = message
 
 	def execute(self):
-		repo = self.repo.get_repo()
+		repo = self.repo.ghrepo
 		msg = self.text
 
-		data = self.repo.closed_issues(self.repo.get_repo(), fromDateObj=None, toDateObj=None, tags=[], average=None)
+		data = self.repo.closed_issues(fromDateObj=None, toDateObj=None, tags=[], average=None)
 
 		if 'message' in data and data['message'] == 'Not Found':
-			return 'Não existe nenhum time *' + squadRepo + '* no GitHub. Se deseja o leadtime de outro time, ' + \
+			return 'Não existe nenhum time *' + self.repo.ghrepo + '* no GitHub. Se deseja o leadtime de outro time, ' + \
 				   'é só perguntar "qual o leadtime do time xxxxxx?"'
 			
 		else:
 			if 'leadtime' in data:
 
-				ret1 = 'Análise do *leadtime* dos ultimos *7 dias* para o time *' + squadRepo + '*: \n'
+				ret1 = 'Análise do *leadtime* dos ultimos *7 dias* para o time *' + self.repo.ghrepo + '*: \n'
 				ret2 = 'Leadtime de histórias entregues: '
 				ret4 = ':thumbsup: indica leadtime *abaixo* da média, :thumbsdown: indica leadtime *acima* da média.\n'
 
 				thr = data['leadtime']
 				keys = thr.keys()
-				sorted(keys)
+				keys.sort()
 				
 				first = None
 				last = None
@@ -63,20 +63,17 @@ class Leadtime:
 				elif last is not None and first is None:
 					ret3 += 'O time voltou à ativa depois de um tempo sem entregas :the_horns:\n'
 				else:
-					end = (((last / first) -1) * 100)
+					end = (((float(last) / float(first)) -1) * 100)
 					if end == 0:
 						ret3 += 'O time está com seu *leadtime estável* :punch:\n'
 					elif end > 0:
-						ret3 += 'O time está entregando *' + str(int(end)) + '% mais devagar* do que a 7 dias atrás :disappointed:\n'
+						ret3 += 'O time está entregando *' + "{0:.2f}".format(float(end)) + '% mais devagar* do que a 7 dias atrás :disappointed:\n'
 					elif end < 0:
 						end = end * -1
-						ret3 += 'O time está entregando em média *' + str(int(end)) + '% mais rápido* do que a 7 dias atrás :smiley:\n'
+						ret3 += 'O time está entregando em média *' + "{0:.2f}".format(float(end)) + '% mais rápido* do que a 7 dias atrás :smiley:\n'
 
 				ret3 += '_Lembrando que no caso de leadtime, quanto menor o número mais rápido_ \n'
 
-			if simple == False:
-				ret = div + '\n' + ret1 + '\n' + ret3 + '\n' + ret2 + ret4 + '\n' + div
-			else:
-				ret = ret3
+			ret = ret1 + '\n' + ret3 + '\n' + ret2 + ret4
 			
 			return ret

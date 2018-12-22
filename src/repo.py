@@ -11,52 +11,15 @@ from datetime import datetime, timedelta
 
 class Repo:
 
-	def __init__(self, message):
-		self.text = message
-
-	def get_repo(self):
-		config = ConfigParser.RawConfigParser()
-		config.read('command.cfg')
-		reg = config.get('github', 'repo-regex')
-
-		matchObj = re.search( reg, self.text, re.M|re.I)
-
-		ret = None
-		if matchObj:
-			ret = matchObj.group()
-
-		return ret
-
-	# Retorna os repositorios para preenchimento do combobox
-	def repos():
-		ret = []
-
-		url = 'https://api.github.com/search/repositories?per_page=500&q=org:' + org + ' chapter OR squad in:name'
-		response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
-		data = response.json()
-		for repo in data['items']:
-			ret.append({'name': repo['name'], 'description': repo['description']})
-
-		return ret
-
-	# Retorna as labels das issues do Repositorio selecionado
-	def labels(squadRepo):
-		ret = []
-		
-		url = 'https://api.github.com/repos/' + org + '/' + squadRepo + '/labels'
-		response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))  
-		data = response.json()  
-		for label in data:
-			ret.append(label['name'])
-
-		return ret
+	def __init__(self, ghrepo):
+		self.ghrepo = ghrepo
 
 	# Retorna dados das issues abertas
-	def open_issues(squadRepo, tags):
+	def open_issues(self, tags):
 		issues = []
 		leadtime = []
 
-		url = 'https://api.github.com/repos/' + org + '/' + squadRepo + '/issues?per_page=100' + \
+		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/issues?per_page=100' + \
 				'&state=open&sort=created&direction=asc'
 
 		while url is not None:
@@ -85,24 +48,24 @@ class Repo:
 		return {'leadtime': [mean(leadtime), stddev(leadtime)], 'openIssues': issues}
 
 	# Retorna dados das issues abertas
-	def cfd(squadRepo, fromDateObj, toDateObj, tags, average):
+	def cfd(self, fromDateObj, toDateObj, tags, average):
 		issues = []
 
-		url = 'https://api.github.com/repos/'+ org + '/' + squadRepo + '/issues?per_page=100&since=' + \
+		url = 'https://api.github.com/repos/'+ os.environ['gh_organization'] + '/' + self.ghrepo + '/issues?per_page=100&since=' + \
 				fromDateObj.strftime('%Y-%m-%dT%H:%M:%SZ') + '&state=closed&sort=created&direction=asc'
 
-		run_cfd(url, squadRepo, tags, issues)
+		run_cfd(url, self.ghrepo, tags, issues)
 
-		url = 'https://api.github.com/repos/' + org + '/' + squadRepo + '/issues?per_page=100' + \
+		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/issues?per_page=100' + \
 				'&state=open&sort=created&direction=asc'
 
-		run_cfd(url, squadRepo, tags, issues)
+		run_cfd(url, self.ghrepo, tags, issues)
 
 		return {'dateFrom': fromDateObj.strftime('%Y-%m-%d'), \
 		  'dateTo': toDateObj.strftime('%Y-%m-%d'), \
 		  'cfd': issues}
 
-	def run_cfd(url, squadRepo, tags, issues):
+	def run_cfd(url, tags, issues):
 		while url is not None:
 			response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
 			data = response.json()
@@ -125,7 +88,7 @@ class Repo:
 						issueArr['closed_at']=(issue['closed_at'].split('T')[0])
 
 					if ('assignee' in issue and issue['assignee'] is not None):
-						url2 = 'https://api.github.com/repos/' + org + '/' + squadRepo + '/issues/' + str(issue['number']) + '/events?per_page=500'
+						url2 = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/issues/' + str(issue['number']) + '/events?per_page=500'
 						response2 = requests.get(url2, auth=(os.environ['user'], os.environ['pass']))
 						dataEvnt = response2.json()
 
@@ -139,7 +102,7 @@ class Repo:
 					issues.append(issueArr)
 
 	# Retorna dados das issues fechadas
-	def closed_issues(self, squadRepo, fromDateObj, toDateObj, tags, average):
+	def closed_issues(self, fromDateObj, toDateObj, tags, average):
 		if average is None:
 			config = ConfigParser.RawConfigParser()
 			config.read('command.cfg')
@@ -156,10 +119,8 @@ class Repo:
 		thrAvgHelper = {}
 		ltAvgHelper = {}
 		leadtime = {}
-		ret = {'squadRepo': squadRepo ,'tagsTitles': tags, 'throughput' : throughput, 'leadtime': leadtime}
+		ret = {'self.repo.ghrepo': self.ghrepo ,'tagsTitles': tags, 'throughput' : throughput, 'leadtime': leadtime}
 		fromDateObjAvg = fromDateObj - timedelta(days=(average-1))
-		#ret['throughput_average_helper'] = thrAvgHelper
-		#ret['leadtime_average_helper'] = ltAvgHelper
 
 		# Preenche com as chaves iniciais
 		d = fromDateObjAvg
@@ -174,7 +135,7 @@ class Repo:
 			d += timedelta(days=1)
 
 		# Busca os dados no GitHub
-		url = 'https://api.github.com/repos/' + org + '/' + squadRepo + '/issues?per_page=500&state=closed&since=' + fromDateObjAvg.strftime('%Y-%m-%dT%H:%M:%SZ')
+		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/issues?per_page=500&state=closed&since=' + fromDateObjAvg.strftime('%Y-%m-%dT%H:%M:%SZ')
 		
 		while url is not None:
 			response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
@@ -228,8 +189,8 @@ class Repo:
 						throughput[dateClosedFormated][1] = days
 
 		# Calcula as médias
-		keys = thrAvgHelper.keys()
-		keysSorted = sorted(keys)
+		keysSorted = thrAvgHelper.keys()
+		keysSorted.sort()
 
 		# Média de throughput
 		avg = []
@@ -247,8 +208,8 @@ class Repo:
 					throughput[keysSorted[x]][2][z] = mean(avg)
 					del avg[0]
 
-		keys = ltAvgHelper.keys()
-		keysSorted = sorted(keys)
+		keysSorted = ltAvgHelper.keys()
+		keysSorted.sort()
 
 		# Media de Leadtime
 		avg = []
@@ -264,48 +225,50 @@ class Repo:
 
 		return ret
 
-	def tag_regex(tags):
-		# Cria REGEX para busca das TAGS
-		reg = ''
-		for tag in tags:
-			reg += '["|\']name["|\']: ["|\']' + tag + '["|\']|'
-		prog = re.compile(reg[:-1])
+	def get_apr(self):
+	    url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/contents/agl/apr'
+	    response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
+	    data = response.json()
 
-		return prog
+	    return data
 
-	def next_page(link):
-		matchObj = re.search( r'<.*?>; rel="next"', link , re.M|re.I|re.A )
-		
-		if matchObj:
-			return matchObj.group().replace('<','').replace('>; rel="next"','')
-		else:
-			return None
+def tag_regex(tags):
+	# Cria REGEX para busca das TAGS
+	reg = ''
+	for tag in tags:
+		reg += '["|\']name["|\']: ["|\']' + tag + '["|\']|'
+	prog = re.compile(reg[:-1])
 
+	return prog
 
-	def mean(data):
-		"""Return the sample arithmetic mean of data."""
-		n = len(data)
-		if n < 1:
-			return None
-		return sum(data)/n # in Python 2 use sum(data)/float(n)
+def next_page(link):
+	matchObj = re.search( r'<.*?>; rel="next"', link , re.M|re.I|re.A )
+	
+	if matchObj:
+		return matchObj.group().replace('<','').replace('>; rel="next"','')
+	else:
+		return None
 
-	def _ss(data):
-		"""Return sum of square deviations of sequence data."""
-		c = mean(data)
-		ss = sum((x-c)**2 for x in data)
-		return ss
+def mean(data):
+	"""Return the sample arithmetic mean of data."""
+	n = len(data)
+	if n < 1:
+		return None
+	return sum(data)/float(n)
 
-	def stddev(data, ddof=0):
-		"""Calculates the population standard deviation
-		by default; specify ddof=1 to compute the sample
-		standard deviation."""
-		n = len(data)
-		if n < 2:
-			return None
-		ss = _ss(data)
-		pvar = ss/(n-ddof)
-		return pvar**0.5
+def _ss(data):
+	"""Return sum of square deviations of sequence data."""
+	c = mean(data)
+	ss = sum((x-c)**2 for x in data)
+	return ss
 
-config = ConfigParser.RawConfigParser()
-config.read('command.cfg')
-org = config.get('github', 'organization')
+def stddev(data, ddof=0):
+	"""Calculates the population standard deviation
+	by default; specify ddof=1 to compute the sample
+	standard deviation."""
+	n = len(data)
+	if n < 2:
+		return None
+	ss = _ss(data)
+	pvar = ss/(n-ddof)
+	return pvar**0.5
