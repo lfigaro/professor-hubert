@@ -20,10 +20,23 @@ logger.setLevel(logging.INFO)
 def handler(event, context):
     logger.info('event: ' + json.dumps(event))
 
+
     if 'body' in event and \
        event['body'] is not None:
         event = json.loads(event['body'])
         logger.info('event: ' + json.dumps(event))
+    elif 'queryStringParameters' in event and \
+       event['queryStringParameters'] is not None:
+        event = json.loads(event['queryStringParameters'])
+        logger.info('event: ' + str(event))
+    # Execute cron jobs
+    elif 'source' in event and \
+       event['source'] == 'cron' and \
+       'action' in event:
+        class_ = getattr(importlib.import_module("batch." + event['action']), event['action'].capitalize())
+        command = class_(event)
+        command.execute()
+        return
 
     parser = None
     if 'token' in event and \
@@ -108,4 +121,5 @@ if __name__ == "__main__":
         if index > 0:
             args += sys.argv[index] + ' '
 
-    handler({"token": os.environ['sl_token_src'], "event": {"channel": "CA16GDSTG", "text": "<@UAEKQ2H1P> " + args } }, None)
+    handler (json.loads(args), None)
+    #handler({"token": os.environ['sl_token_src'], "event": {"channel": "CA16GDSTG", "text": "<@UAEKQ2H1P> " + args } }, None)

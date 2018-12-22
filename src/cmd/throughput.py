@@ -2,13 +2,6 @@
 
 from datetime import datetime, timedelta
 
-import json
-import logging
-logging.basicConfig()
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
-
 class Throughput:
 
 	def __init__(self, repo, message):
