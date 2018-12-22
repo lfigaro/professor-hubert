@@ -1,6 +1,5 @@
 import os
 import json
-import logging
 import requests
 import re
 import copy
@@ -9,9 +8,6 @@ import ssl
 
 from boto.s3.key import Key
 from datetime import datetime, timedelta
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 
 class Offline_metrics:
 
@@ -61,8 +57,6 @@ class Offline_metrics:
         url = 'https://api.github.com/repos/' + os.environ['gh_organization']  + '/' + squadRepo + '/labels'
         response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
         data = response.json()
-        logger.info('URL: ' + url)
-        logger.info('Response: ' + response.text)
 
         for label in data:
             ret.append(label['name'])
@@ -85,12 +79,9 @@ class Offline_metrics:
         while url is not None:
             response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
             data = response.json()
-            logger.info('URL: ' + url)
-            logger.info('Response: ' + response.text)
 
             link = response.headers.get('link', None)
             if link is not None:
-                logger.info('Link: ' + link)
                 url = self.getNextPage(link)
             else:
                 url = None
@@ -106,12 +97,9 @@ class Offline_metrics:
                 while url2 is not None:
                     response2 = requests.get(url2, auth=(os.environ['user'], os.environ['pass']))
                     dataEvnt = response2.json()
-                    logger.info('URL: ' + url2)
-                    logger.info('Response: ' + response2.text)
 
                     link2 = response2.headers.get('link', None)
                     if link2 is not None:
-                        logger.info('Link: ' + link2)
                         url2 = self.getNextPage(link2)
                     else:
                         url2 = None
@@ -132,14 +120,12 @@ class Offline_metrics:
 
                                     issueTagsArray[event['label']['name']] += delta.seconds
                                     
-                                    logger.info('issueTagsArrayTemp: ' + json.dumps(issueTagsArrayTemp))
                                     issueTagsArrayTemp[event['label']['name']] = [None, None]
 
                         if event['event'] in ['assigned', 'unassigned']:
 
                             if event['event'] == 'assigned':
                                 issueTagsArrayTemp['assigned'][0] = event['created_at']
-                                logger.info('issueTagsArrayTemp: ' + json.dumps(issueTagsArrayTemp))
 
                             if event['event'] == 'unassigned':
                                 if issueTagsArrayTemp['assigned'][0] is not None:
@@ -150,10 +136,7 @@ class Offline_metrics:
 
                                     issueTagsArray['assigned'] += delta.seconds
 
-                                    logger.info('issueTagsArrayTemp: ' + json.dumps(issueTagsArrayTemp))
                                     issueTagsArrayTemp['assigned'] = [None, None]
-
-                    logger.info('issueTagsArrayTemp: ' + json.dumps(issueTagsArrayTemp))
 
                     for key in issueTagsArrayTemp:
                         if issueTagsArrayTemp[key][0] is not None and issueTagsArrayTemp[key][1] is None:
