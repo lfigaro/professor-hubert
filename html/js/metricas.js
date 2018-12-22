@@ -14,7 +14,7 @@ function getRepos() {
 		}
 	}
 
-	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod/gh-metrics?action=getRepos";
+	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=get_repos&squad-repo=";
 	$.getJSON(url, setRepos);
 }
 
@@ -65,7 +65,7 @@ function getLabels() {
 
 	squad = $( "#squad option:selected" ).text();
 
-	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod/gh-metrics?action=getLabels&squad-repo=" + squad;
+	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=get_labels&squad-repo=" + squad;
 	$.getJSON(url, setLabels);
 }
 
@@ -674,10 +674,10 @@ function printChart() {
 	avg = ""
 
 	if ($("#toDate").val() != ""){
-		to_date = "&to-date=" + $("#toDate").val();
+		to_date = "&to_date=" + $("#toDate").val();
 	}
 	if ($("#fromDate").val() != ""){
-		from_date = "&from-date=" + $("#fromDate").val();	
+		from_date = "&from_date=" + $("#fromDate").val();	
 	}
 	if ($("#average").val() != "" && !isNaN($("#average").val())){
 		avg = "&average=" + $("#average").val();
@@ -692,19 +692,16 @@ function printChart() {
 	}
 
 
-	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod/gh-metrics?action=metrics&squad-repo=" 
+	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=metrics&squad-repo=" 
 		+ squad + to_date + from_date + tags + avg;
 
 	$.getJSON(url, addData);
 
-	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod/gh-metrics?action=getCFD&squad-repo=" 
+	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=getCFD&squad-repo=" 
 	+ squad + to_date + from_date + tags + avg;
 
 	$.getJSON(url, addDataCFD);
 
-	
-
-	//url = "http://agilemetrics.vivareal.com.s3-website-us-east-1.amazonaws.com/data/" + squad + ".json";
 	url = "/data/" + squad + ".json";
 
 	$.getJSON( url ).done(function( json ) {
