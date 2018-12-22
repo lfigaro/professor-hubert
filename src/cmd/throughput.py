@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime, timedelta
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 class Throughput:
 
@@ -9,7 +13,7 @@ class Throughput:
 		self.text = message
 
 	def execute(self):
-		data = self.repo.closed_issues(fromDateObj=None, toDateObj=None, tags=[], average=None)
+		data = self.repo.closed_issues()
 
 		if 'message' in data and data['message'] == 'Not Found':
 			return 'Não existe nenhum time *' + self.repo.ghrepo + '* no GitHub. Se deseja a vazão de outro time, ' + \

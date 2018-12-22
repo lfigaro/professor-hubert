@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import ConfigParser
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 class Help:
 

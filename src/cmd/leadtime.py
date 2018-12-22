@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime, timedelta
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 class Leadtime:
 
@@ -12,7 +15,7 @@ class Leadtime:
 		repo = self.repo.ghrepo
 		msg = self.text
 
-		data = self.repo.closed_issues(fromDateObj=None, toDateObj=None, tags=[], average=None)
+		data = self.repo.closed_issues()
 
 		if 'message' in data and data['message'] == 'Not Found':
 			return 'Não existe nenhum time *' + self.repo.ghrepo + '* no GitHub. Se deseja o leadtime de outro time, ' + \

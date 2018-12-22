@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime, timedelta
-import logging
 import json
+import sys
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 class Open:
 
@@ -17,7 +17,7 @@ class Open:
         repo = self.repo.ghrepo
         msg = self.text
 
-        data = self.repo.closed_issues(fromDateObj=None, toDateObj=None, tags=[], average=None)
+        data = self.repo.closed_issues()
 
         ltAvg=0
         thAvg=0

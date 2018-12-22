@@ -4,7 +4,6 @@ import ConfigParser
 import re
 import os
 import json
-import logging
 import requests
 import re
 from datetime import datetime, timedelta
@@ -14,8 +13,41 @@ class Repo:
 	def __init__(self, ghrepo):
 		self.ghrepo = ghrepo
 
+	def get_repos(self):
+	    ret = []
+
+	    url = 'https://api.github.com/search/repositories?per_page=500&q=org:' + os.environ['gh_organization'] + \
+	    	  ' chapter OR squad in:name'
+	    response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
+	    data = response.json()
+
+	    for repo in data['items']:
+	        ret.append({'name': repo['name'], 'description': repo['description']})
+
+	    return ret
+
+	# Retorna as labels das issues do Repositorio selecionado
+	def get_labels(self):
+	    ret = []
+	    
+	    url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/labels'
+
+	    while url is not None:
+	        response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))  
+	        data = response.json()  
+	        link = response.headers.get('link', None)
+	        if link is not None:
+	            url = next_page(link)
+	        else:
+	            url = None
+
+	        for label in data:
+	            ret.append(label['name'])
+
+	    return ret
+
 	# Retorna dados das issues abertas
-	def open_issues(self, tags):
+	def open_issues(self, tags=[]):
 		issues = []
 		leadtime = []
 
@@ -48,11 +80,11 @@ class Repo:
 		return {'leadtime': [mean(leadtime), stddev(leadtime)], 'openIssues': issues}
 
 	# Retorna dados das issues abertas
-	def cfd(self, fromDateObj, toDateObj, tags, average):
+	def cfd(self, from_date=None, to_date=None, tags=[], average=None):
 		issues = []
 
 		url = 'https://api.github.com/repos/'+ os.environ['gh_organization'] + '/' + self.ghrepo + '/issues?per_page=100&since=' + \
-				fromDateObj.strftime('%Y-%m-%dT%H:%M:%SZ') + '&state=closed&sort=created&direction=asc'
+				from_date.strftime('%Y-%m-%dT%H:%M:%SZ') + '&state=closed&sort=created&direction=asc'
 
 		run_cfd(url, self.ghrepo, tags, issues)
 
@@ -61,8 +93,8 @@ class Repo:
 
 		run_cfd(url, self.ghrepo, tags, issues)
 
-		return {'dateFrom': fromDateObj.strftime('%Y-%m-%d'), \
-		  'dateTo': toDateObj.strftime('%Y-%m-%d'), \
+		return {'dateFrom': from_date.strftime('%Y-%m-%d'), \
+		  'dateTo': to_date.strftime('%Y-%m-%d'), \
 		  'cfd': issues}
 
 	def run_cfd(url, tags, issues):
@@ -102,17 +134,22 @@ class Repo:
 					issues.append(issueArr)
 
 	# Retorna dados das issues fechadas
-	def closed_issues(self, fromDateObj, toDateObj, tags, average):
+	def closed_issues(self, from_date=None, to_date=None, tags=[], average=None):
 		if average is None:
 			config = ConfigParser.RawConfigParser()
 			config.read('command.cfg')
 			average = config.getint('github', 'average')
 
-		if toDateObj is None:
-			toDateObj = datetime.now().replace(hour=23, minute=59, second=59)
+		if to_date is None:
+			to_date = datetime.now().replace(hour=23, minute=59, second=59)
+		else:
+			to_date = datetime.strptime(to_date, "%Y-%m-%d")
 		
-		if fromDateObj is None:
-			fromDateObj = datetime.now().replace(hour=00, minute=00, second=00) - timedelta(days=average)
+		if from_date is None:
+			from_date = datetime.now().replace(hour=00, minute=00, second=00) - timedelta(days=average)
+		else:
+			from_date = datetime.strptime(from_date, "%Y-%m-%d")
+
 
 		# Cria objetos que vão ser retornados
 		throughput = {}
@@ -120,26 +157,28 @@ class Repo:
 		ltAvgHelper = {}
 		leadtime = {}
 		ret = {'self.repo.ghrepo': self.ghrepo ,'tagsTitles': tags, 'throughput' : throughput, 'leadtime': leadtime}
-		fromDateObjAvg = fromDateObj - timedelta(days=(average-1))
+		from_dateAvg = from_date - timedelta(days=(average-1))
 
 		# Preenche com as chaves iniciais
-		d = fromDateObjAvg
-		while d <= toDateObj:
+		d = from_dateAvg
+		while d <= to_date:
 			tagsRet = [0] * len(tags)
 			thrAvgHelper[d.strftime("%Y-%m-%d")] = [0, tagsRet]
 			ltAvgHelper[d.strftime("%Y-%m-%d")] = []
-			if d >= fromDateObj:
+			if d >= from_date:
 				tagsRet = [0] * len(tags)
 				throughput[d.strftime("%Y-%m-%d")] = [None,0,tagsRet]
 				leadtime[d.strftime("%Y-%m-%d")] = [None]
 			d += timedelta(days=1)
 
 		# Busca os dados no GitHub
-		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/issues?per_page=500&state=closed&since=' + fromDateObjAvg.strftime('%Y-%m-%dT%H:%M:%SZ')
+		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/issues?per_page=500&state=closed&since=' + from_dateAvg.strftime('%Y-%m-%dT%H:%M:%SZ')
 		
 		while url is not None:
 			response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
 			data = response.json()
+
+			print(data)
 
 			link = response.headers.get('link', None)
 			if link is not None:
@@ -164,7 +203,7 @@ class Repo:
 					dateClosedFormated = dateClosed.strftime("%Y-%m-%d")
 
 					delta = dateClosed - dateCreated
-					if dateClosed <= toDateObj and dateClosed >= fromDateObjAvg:
+					if dateClosed <= to_date and dateClosed >= from_dateAvg:
 						#LEADTIME-AVG
 						ltAvgHelper[dateClosedFormated].append(delta.days)
 
@@ -179,7 +218,7 @@ class Repo:
 									days = days + 1
 									thrAvgHelper[dateClosedFormated][1][idTag] = days
 
-					if dateClosed <= toDateObj and dateClosed >= fromDateObj:
+					if dateClosed <= to_date and dateClosed >= from_date:
 						#LEADTIME
 						leadtime[dateClosedFormated].append([issue['number'], delta.days])
 
@@ -242,12 +281,12 @@ def tag_regex(tags):
 	return prog
 
 def next_page(link):
-	matchObj = re.search( r'<.*?>; rel="next"', link , re.M|re.I|re.A )
-	
-	if matchObj:
-		return matchObj.group().replace('<','').replace('>; rel="next"','')
-	else:
-		return None
+    matchObj = re.search( r'\<[^<]*?\>; rel="next"', link , re.M|re.I )
+    
+    if matchObj:
+        return matchObj.group().replace('<','').replace('>; rel="next"','')
+    else:
+        return None
 
 def mean(data):
 	"""Return the sample arithmetic mean of data."""

@@ -4,6 +4,10 @@ import json
 import os
 import requests
 from datetime import datetime
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 class Apr:
 

@@ -35,14 +35,14 @@ class Offline_metrics:
                        datetime.strptime(oldExecutions[repo['name']], '%Y-%m-%dT%H:%M:%SZ') < datetime.strptime(oldExecutions[squadRepo], '%Y-%m-%dT%H:%M:%SZ'):
                        squadRepo = repo['name']
         
-        fromDateObj = datetime.now().replace(hour=00, minute=00, second=00) - timedelta(days=90)
-        toDateObj = datetime.now().replace(hour=23, minute=59, second=59)
+        from_date = datetime.now().replace(hour=00, minute=00, second=00) - timedelta(days=90)
+        to_date = datetime.now().replace(hour=23, minute=59, second=59)
 
-        ret = {'fromDate': fromDateObj.strftime('%Y-%m-%d'),
-                 'toDate':   toDateObj.strftime('%Y-%m-%d')}
+        ret = {'fromDate': from_date.strftime('%Y-%m-%d'),
+                 'toDate':   to_date.strftime('%Y-%m-%d')}
         tags = self.getLabels(squadRepo)
         ret['tags'] = tags
-        ret['issues'] = self.getIssueEvents(squadRepo, fromDateObj, toDateObj, tags)
+        ret['issues'] = self.getIssueEvents(squadRepo, from_date, to_date, tags)
         self.save_to_bucket(squadRepo, ret)
 
         oldExecutions[squadRepo] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -64,7 +64,7 @@ class Offline_metrics:
         return ret
 
     # Retorna dados das issues abertas
-    def getIssueEvents(self, squadRepo, fromDateObj, toDateObj, tags):
+    def getIssueEvents(self, squadRepo, from_date, to_date, tags):
         issues = {}
 
         tagsArray = {'assigned': 0, 'unassigned': 0}
@@ -74,7 +74,7 @@ class Offline_metrics:
             tagsArrayTemp[tag] = [None, None]
 
         url = 'https://api.github.com/repos/' + os.environ['gh_organization']  + '/' + squadRepo + '/issues?per_page=100&since=' + \
-                fromDateObj.strftime('%Y-%m-%dT%H:%M:%SZ') + '&state=closed&sort=created&direction=asc'
+                from_date.strftime('%Y-%m-%dT%H:%M:%SZ') + '&state=closed&sort=created&direction=asc'
 
         while url is not None:
             response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
