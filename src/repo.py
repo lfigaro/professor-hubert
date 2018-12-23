@@ -13,6 +13,52 @@ class Repo:
 	def __init__(self, ghrepo):
 		self.ghrepo = ghrepo
 
+	def get_apr(self):
+		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.repo.ghrepo + '/contents/agl/apr'
+		response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
+		data = response.json()
+
+		ret = None
+		if 'message' in data and 'Not Found' == data['message']:            
+		    ret = 'Não foi encontrado um time ' + self.repo.ghrepo + ' ou ele não tem um APR :-('
+
+		else:
+		    prvWhen = None
+		    for apr in data:
+		        url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.repo.ghrepo + '/commits?path=' + apr['path']
+		        response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
+		        commits = response.json()
+
+		        when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
+		        if prvWhen is None or prvWhen < when:
+		            prvWhen = when
+		            ret = apr
+
+		return ret
+
+	def get_retro(self):
+		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/contents/agl/retro'
+		response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
+		data = response.json()
+
+		ret = None
+		if 'message' in data and 'Not Found' == data['message']:
+		    ret = 'Não foi encontrado um time ' + self.ghrepo + ' ou ele não tem retrospectivas no GH :-('
+
+		else:
+		    prvWhen = None
+		    for apr in data:
+		        url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/commits?path=' + apr['path']
+		        response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
+		        commits = response.json()
+
+		        when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
+		        if prvWhen is None or prvWhen < when:
+		            prvWhen = when
+		            ret = apr
+		
+		return ret
+
 	def get_repos(self):
 	    ret = []
 
@@ -24,7 +70,7 @@ class Repo:
 	    for repo in data['items']:
 	        ret.append({'name': repo['name'], 'description': repo['description']})
 
-	    return ret
+	    return json.loads(ret)
 
 	# Retorna as labels das issues do Repositorio selecionado
 	def get_labels(self):
@@ -177,8 +223,6 @@ class Repo:
 		while url is not None:
 			response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
 			data = response.json()
-
-			print(data)
 
 			link = response.headers.get('link', None)
 			if link is not None:
