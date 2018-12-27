@@ -55,6 +55,6 @@ jobs:
       - run:
           name: deploy lambda
           command: |
-            pip install --upgrade pip
+            sudo pip install --upgrade pip
             . deploy.sh
           
