@@ -56,5 +56,6 @@ jobs:
           name: deploy lambda
           command: |
             sudo pip install --upgrade pip
+            cd /home/circleci/repo
             . deploy.sh
           
