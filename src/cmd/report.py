@@ -5,6 +5,7 @@ import json
 from leadtime import Leadtime
 from throughput import Throughput
 from open import Open
+from retro import Retro
 import sys
 
 reload(sys)
@@ -15,18 +16,34 @@ class Report:
     def __init__(self, repo, message):
         self.repo = repo
         self.text = message
+        self.average = None
+        self.tags = None
+        self.full = None
 
     def execute(self):
-        ret = '\n--- *Leadtime* ----------------------------------\n'
+        ret = 'Report do time *' + self.repo.ghrepo.upper() + '*'
+
+        ret += '\n\n--- *Tempo de espera* ----------------------------------\n'
         command = Leadtime(self.repo, self.text)
+        setattr(command, 'average', self.average)
+        setattr(command, 'tags', self.tags)
+        setattr(command, 'full', self.full)
         ret += command.execute()
 
-        ret += '\n--- *Throughput* ----------------------------------\n'
+        ret += '\n\n--- *Vazão* ----------------------------------\n'
         command = Throughput(self.repo, self.text)
+        setattr(command, 'average', self.average)
+        setattr(command, 'tags', self.tags)
+        setattr(command, 'full', self.full)
         ret += command.execute()
 
-        ret += '\n--- *Open Issues* ----------------------------------\n'
+        ret += '\n\n--- *Backlog atual* ----------------------------------\n'
         command = Open(self.repo, self.text)
+        setattr(command, 'tags', self.tags)
         ret += command.execute()        
-        
+
+        ret += '\n\n--- *Retrospectivas* ----------------------------------\n'
+        command = Retro(self.repo, self.text)
+        ret += command.execute()        
+
         return ret

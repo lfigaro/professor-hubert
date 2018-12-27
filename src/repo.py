@@ -13,27 +13,30 @@ class Repo:
 	def __init__(self, ghrepo):
 		self.ghrepo = ghrepo
 
+		config = ConfigParser.RawConfigParser()
+		config.read('command.cfg')
+		average = config.getint('github', 'average')
+		self.average = average
+
 	def get_apr(self):
-		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.repo.ghrepo + '/contents/agl/apr'
+		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/contents/agl/apr'
 		response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
 		data = response.json()
 
 		ret = None
-		if 'message' in data and 'Not Found' == data['message']:            
-		    ret = 'Não foi encontrado um time ' + self.repo.ghrepo + ' ou ele não tem um APR :-('
+		if not('message' in data and 'Not Found' == data['message']):
+			ret={}
+			prvWhen = None
+			for apr in data:
+			    url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/commits?path=' + apr['path']
+			    response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
+			    commits = response.json()
 
-		else:
-		    prvWhen = None
-		    for apr in data:
-		        url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.repo.ghrepo + '/commits?path=' + apr['path']
-		        response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
-		        commits = response.json()
-
-		        when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
-		        if prvWhen is None or prvWhen < when:
-		            prvWhen = when
-		            ret = apr
-
+			    when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
+			    if prvWhen is None or prvWhen < when:
+			        prvWhen = when
+		        	ret[prvWhen.strftime("%Y-%m-%d")] = apr
+		
 		return ret
 
 	def get_retro(self):
@@ -42,35 +45,41 @@ class Repo:
 		data = response.json()
 
 		ret = None
-		if 'message' in data and 'Not Found' == data['message']:
-		    ret = 'Não foi encontrado um time ' + self.ghrepo + ' ou ele não tem retrospectivas no GH :-('
+		if not('message' in data and 'Not Found' == data['message']):
+			ret={}
+			prvWhen = None
+			for retro in data:
+			    url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/commits?path=' + retro['path']
+			    response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
+			    commits = response.json()
 
-		else:
-		    prvWhen = None
-		    for apr in data:
-		        url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/commits?path=' + apr['path']
-		        response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
-		        commits = response.json()
-
-		        when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
-		        if prvWhen is None or prvWhen < when:
-		            prvWhen = when
-		            ret = apr
+			    when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
+			    if prvWhen is None or prvWhen < when:
+			        prvWhen = when
+		        	ret[prvWhen.strftime("%Y-%m-%d")] = retro
 		
 		return ret
 
 	def get_repos(self):
-	    ret = []
+		ret = []
 
-	    url = 'https://api.github.com/search/repositories?per_page=500&q=org:' + os.environ['gh_organization'] + \
-	    	  ' chapter OR squad in:name'
-	    response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
-	    data = response.json()
+		url = 'https://api.github.com/search/repositories?per_page=500&q=org:' + os.environ['gh_organization'] + \
+			  ' chapter OR squad in:name'
 
-	    for repo in data['items']:
-	        ret.append({'name': repo['name'], 'description': repo['description']})
+		while url is not None:
+			response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
+			data = response.json()
 
-	    return json.loads(ret)
+			for repo in data['items']:
+				ret.append(repo['name'])
+
+			link = response.headers.get('link', None)
+			if link is not None:
+				url = next_page(link)
+			else:
+				url = None
+
+		return {'repos': ret}
 
 	# Retorna as labels das issues do Repositorio selecionado
 	def get_labels(self):
@@ -93,7 +102,12 @@ class Repo:
 	    return ret
 
 	# Retorna dados das issues abertas
-	def open_issues(self, tags=[]):
+	def open_issues(self, tags=None):
+		if tags is not None:
+			tags = tags.split(',')
+		else:
+			tags = []
+		
 		issues = []
 		leadtime = []
 
@@ -112,7 +126,7 @@ class Repo:
 
 			prog = tag_regex(tags)
 			for issue in data:			
-				if prog.search(str(issue['labels'])) is not None and 'pull_request' not in issue:
+				if prog.search(str(issue['labels']).replace('u\'','\'')) is not None and 'pull_request' not in issue:
 					dateCreated = datetime.strptime(issue['created_at'], '%Y-%m-%dT%H:%M:%SZ')
 					dateCurrent = datetime.now()
 					delta = dateCurrent - dateCreated
@@ -126,24 +140,44 @@ class Repo:
 		return {'leadtime': [mean(leadtime), stddev(leadtime)], 'openIssues': issues}
 
 	# Retorna dados das issues abertas
-	def cfd(self, from_date=None, to_date=None, tags=[], average=None):
+	def get_cfd(self, from_date=None, to_date=None, tags=None, average=None):
+		if average is None:
+			average = self.average
+		else:
+			average=int(average)
+
+		if to_date is None:
+			to_date = datetime.now().replace(hour=23, minute=59, second=59)
+		else:
+			to_date = datetime.strptime(to_date, "%Y-%m-%d")
+		
+		if from_date is None:
+			from_date = datetime.now().replace(hour=00, minute=00, second=00) - timedelta(days=average)
+		else:
+			from_date = datetime.strptime(from_date, "%Y-%m-%d")
+
+		if tags is not None:
+			tags = tags.split(',')
+		else:
+			tags = []
+
 		issues = []
 
 		url = 'https://api.github.com/repos/'+ os.environ['gh_organization'] + '/' + self.ghrepo + '/issues?per_page=100&since=' + \
 				from_date.strftime('%Y-%m-%dT%H:%M:%SZ') + '&state=closed&sort=created&direction=asc'
 
-		run_cfd(url, self.ghrepo, tags, issues)
+		self.run_cfd(url, tags, issues)
 
 		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/issues?per_page=100' + \
 				'&state=open&sort=created&direction=asc'
 
-		run_cfd(url, self.ghrepo, tags, issues)
+		self.run_cfd(url, tags, issues)
 
 		return {'dateFrom': from_date.strftime('%Y-%m-%d'), \
 		  'dateTo': to_date.strftime('%Y-%m-%d'), \
 		  'cfd': issues}
 
-	def run_cfd(url, tags, issues):
+	def run_cfd(self, url, tags, issues):
 		while url is not None:
 			response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
 			data = response.json()
@@ -156,7 +190,7 @@ class Repo:
 
 			prog = tag_regex(tags)
 			for issue in data:			
-				if prog.search(str(issue['labels'])) is not None and 'pull_request' not in issue:
+				if prog.search(str(issue['labels']).replace('u\'','\'')) is not None and 'pull_request' not in issue:
 
 				#if prog.search(str(issue['labels'])) is not None and 'pull_request' not in issue:
 					issueArr = {'issue': issue['number'], \
@@ -180,11 +214,11 @@ class Repo:
 					issues.append(issueArr)
 
 	# Retorna dados das issues fechadas
-	def closed_issues(self, from_date=None, to_date=None, tags=[], average=None):
+	def closed_issues(self, from_date=None, to_date=None, tags=None, average=None):
 		if average is None:
-			config = ConfigParser.RawConfigParser()
-			config.read('command.cfg')
-			average = config.getint('github', 'average')
+			average = self.average
+		else:
+			average=int(average)
 
 		if to_date is None:
 			to_date = datetime.now().replace(hour=23, minute=59, second=59)
@@ -196,6 +230,10 @@ class Repo:
 		else:
 			from_date = datetime.strptime(from_date, "%Y-%m-%d")
 
+		if tags is not None:
+			tags = tags.split(',')
+		else:
+			tags = []
 
 		# Cria objetos que vão ser retornados
 		throughput = {}
@@ -238,7 +276,8 @@ class Repo:
 
 			# Trabalha no retorno da busca do GH
 			for issue in data:
-				if (prog.search(str(issue['labels'])) is not None and 'pull_request' not in issue) :
+				if (prog.search(str(issue['labels']).replace('u\'','\'')) is not None and 'pull_request' not in issue) :
+
 					created_at = issue['created_at']
 					closed_at = issue['closed_at']
 
@@ -308,20 +347,13 @@ class Repo:
 
 		return ret
 
-	def get_apr(self):
-	    url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/contents/agl/apr'
-	    response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
-	    data = response.json()
-
-	    return data
-
 def tag_regex(tags):
 	# Cria REGEX para busca das TAGS
 	reg = ''
 	for tag in tags:
 		reg += '["|\']name["|\']: ["|\']' + tag + '["|\']|'
 	prog = re.compile(reg[:-1])
-
+	
 	return prog
 
 def next_page(link):

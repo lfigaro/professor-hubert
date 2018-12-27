@@ -11,8 +11,9 @@ from datetime import datetime, timedelta
 
 class Offline_metrics:
 
-    def __init__(self, event):
+    def __init__(self, repo, event):
         self.event = event
+        self.repo = repo
 
     def execute(self):
         event = self.event
@@ -82,7 +83,7 @@ class Offline_metrics:
 
             link = response.headers.get('link', None)
             if link is not None:
-                url = self.getNextPage(link)
+                url = self.next_page(link)
             else:
                 url = None
 
@@ -100,7 +101,7 @@ class Offline_metrics:
 
                     link2 = response2.headers.get('link', None)
                     if link2 is not None:
-                        url2 = self.getNextPage(link2)
+                        url2 = self.next_page(link2)
                     else:
                         url2 = None
 
@@ -154,9 +155,9 @@ class Offline_metrics:
 
         return issues
 
-    def getNextPage(self, link):
-        matchObj = re.search( r'<.*?>; rel="next"', link , re.M|re.I )
-        
+    def next_page(self, link):
+        matchObj = re.search( r'\<[^<]*?\>; rel="next"', link , re.M|re.I )
+
         if matchObj:
             return matchObj.group().replace('<','').replace('>; rel="next"','')
         else:

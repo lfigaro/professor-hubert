@@ -38,8 +38,12 @@ def handler(event, context):
     if 'source' in event and \
        event['source'] == 'cron' and \
        'action' in event:
+        ghrepo = None
+        if 'squad-repo' in event:
+            ghrepo = find_repo(event.pop('squad-repo'))
+
         class_ = getattr(importlib.import_module("jobs." + event['action']), event['action'].capitalize())
-        job = class_(event)
+        job = class_(repo.Repo(ghrepo), event)
         job.execute()
 
         ret = get_return(True, 'job ' + event['action'] + ' executed')
@@ -82,7 +86,6 @@ def handler(event, context):
         else:
             ret = get_return(False, 'invalid parser')
 
-    logger.info('return: ' + json.dumps(ret))
     return ret
 
 def find_parser(event):
@@ -108,14 +111,35 @@ def find_command(message, ghrepo):
 
     command = None
     for key, value in commands:
-        ret = re.search(key, message)
+        ret = re.search(r"{}".format(key), message)
         
         if (ret is not None):
             class_ = getattr(importlib.import_module("cmd." + value), value.capitalize())
             command = class_(repo.Repo(ghrepo), message)
             logger.info('command: ' + value)
 
+            find_command_arguments(message, command, value)
+
     return command
+
+def find_command_arguments(message, command, commandName):
+    try:
+        #This exists to maintain the keys capitalized
+        config = ConfigParser.ConfigParser()
+        config.optionxform = str
+        config.read('command.cfg')
+        commands = config.items('command-' + commandName)
+
+        arguments = None
+        for key, value in commands:
+            ret = re.search(r"{}".format(key), message)
+            
+            if (ret is not None):
+                argument = ret.group('value')
+                setattr(command, value, argument)
+                logger.info('argument: %s, value: %s' % (value, argument))
+    except:
+        logger.info('argument: Error returning arguments.')
 
 # Identify if the message contains the github repo
 def find_repo(message):
@@ -142,8 +166,14 @@ def get_return(success, message):
     ret = {
         "statusCode": code,
         "isBase64Encoded": False,
-        'body': str(message)
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"
+        }, 
+        'body': json.dumps(message)
     }
+
+    logger.info('return: ' + json.dumps(ret))
 
     return ret
 
@@ -155,4 +185,3 @@ if __name__ == "__main__":
             args += sys.argv[index] + ' '
 
     handler (json.loads(args), None)
-    #handler({"token": os.environ['sl_token_src'], "event": {"channel": "CA16GDSTG", "text": "<@UAEKQ2H1P> " + args } }, None)

@@ -29,4 +29,4 @@ rm -rf build
 echo 'End of the deploy >>>>>>>>>'
 
 cd html
-aws s3 cp . s3://agilemetrics.vivareal.com/ --recursive --exclude "bin/*" --exclude "*/.DS_Store" --exclude ".DS_Store" --exclude "*/data.json"
+aws s3 cp . s3://agilemetrics.vivareal.com/ --recursive --exclude "src/*" --exclude "*/.DS_Store" --exclude ".DS_Store"

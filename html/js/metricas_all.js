@@ -20,7 +20,7 @@ function addData(data) {
 function addDataST(data) {
 	var dpt = data.throughput;
 	var dpl = data.leadtime;
-	var squadName = data.squadRepo
+	var squadName = data['self.repo.ghrepo']
 	
 	var tp = dpt[toDate.toISOString().split('T')[0]]
 	var lt = dpl[toDate.toISOString().split('T')[0]]
@@ -97,7 +97,7 @@ function addDataST(data) {
 }
 
 function addDataTH(data) {
-	var squadName = data.squadRepo
+	var squadName = data['self.repo.ghrepo']
 	var dps = data.throughput;
 
 	var keys = Object.keys(dps);
@@ -169,7 +169,7 @@ function addDataTH(data) {
 
 
 function addDataLT(data) {
-	var squadName = data.squadRepo
+	var squadName = data['self.repo.ghrepo']
 	var dps = data.leadtime;
 
 	var keys = Object.keys(dps);
@@ -242,27 +242,27 @@ function addDataLT(data) {
 
 function getRepos(data) {
 	if ($("#toDate").val() != ""){
-		to_date = "&to-date=" + $("#toDate").val();
+		to_date = "&to_date=" + $("#toDate").val();
 		toDate = new Date($("#toDate").val())
 	}
 	if ($("#average").val() != "" && !isNaN($("#average").val())){
 		average =  $("#average").val()
 		avg = "&average=" + average;
 		fromDate = new Date(toDate)
-		from_date = "&from-date=" + new Date(fromDate.setDate(fromDate.getDate() - parseInt(average))).toISOString().split('T')[0];
+		from_date = "&from_date=" + new Date(fromDate.setDate(fromDate.getDate() - parseInt(average))).toISOString().split('T')[0];
 	}
 
 	dataPointsST = [];
 	dataPointsTH = [];
 	dataPointsLT = [];
 
-	farolST = data.length;
-	farolTH = data.length;
-	farolLT = data.length;
+	farolST = data['repos'].length;
+	farolTH = data['repos'].length;
+	farolLT = data['repos'].length;
 
-	for (var i = 0; i < data.length; i++) {
-		url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/qa/gh-metrics?action=metrics&squad-repo=" 
-			+ data[i].name + to_date + from_date + avg;
+	for (var i = 0; i < data['repos'].length; i++) {
+		url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=closed_issues&squad-repo=" 
+			+ data['repos'][i] + to_date + from_date + avg;
 
 		$.getJSON(url, addData);
 	}
@@ -270,6 +270,6 @@ function getRepos(data) {
 
 function printChart(data) {
 
-	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/qa/gh-metrics?action=getRepos";
+	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=get_repos&squad-repo=";
 	$.getJSON(url, getRepos);
 }

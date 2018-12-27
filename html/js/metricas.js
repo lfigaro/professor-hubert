@@ -1,15 +1,11 @@
 function getRepos() {
 	function setRepos(data){
 		var combo = document.getElementById("squad");
-		data.sort(function(a, b){
-			var x=a.name.toLowerCase(),
-				y=b.name.toLowerCase();
-			return x<y ? -1 : x>y ? 1 : 0;
-		})
-		for (var i = 0; i < data.length; i++) {
+		data.repos.sort();
+		for (var i = 0; i < data.repos.length; i++) {
 			var option = document.createElement("option");
-			option.value = data[i].name;
-			option.text = data[i].name;
+			option.value = data.repos[i];
+			option.text = data.repos[i];
 			combo.add(option);
 		}
 	}
@@ -649,10 +645,6 @@ function printChart() {
 
 	}
 
-	function download(){
-
-	}
-
 	function loadJSON(json_path, callback) {   
 		var xobj = new XMLHttpRequest();
 		xobj.overrideMimeType("application/json");
@@ -692,12 +684,12 @@ function printChart() {
 	}
 
 
-	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=metrics&squad-repo=" 
+	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=closed_issues&squad-repo=" 
 		+ squad + to_date + from_date + tags + avg;
 
 	$.getJSON(url, addData);
 
-	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=getCFD&squad-repo=" 
+	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=get_cfd&squad-repo=" 
 	+ squad + to_date + from_date + tags + avg;
 
 	$.getJSON(url, addDataCFD);
