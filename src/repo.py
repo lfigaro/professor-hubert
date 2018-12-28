@@ -15,8 +15,8 @@ class Repo:
 
 		config = ConfigParser.RawConfigParser()
 		config.read('command.cfg')
-		average = config.getint('github', 'average')
-		self.average = average
+		self.average = config.getint('github', 'average')
+		self.retro_relative_urls = config.get('github', 'retro.relative.urls')
 
 	def get_apr(self):
 		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/contents/agl/apr'
@@ -50,24 +50,27 @@ class Repo:
 		else:
 			from_date = datetime.strptime(from_date, "%Y-%m-%d")
 
-
-		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/contents/agl/retro'
-		response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
-		data = response.json()
-
 		ret = None
-		if not('message' in data and 'Not Found' == data['message']):
-			ret={}
-			prvWhen = None
-			for retro in data:
-				url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/commits?path=' + retro['path']
-				response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
-				commits = response.json()
+		retro_urls = self.retro_relative_urls.split(',')
+		for retro_url in retro_urls:
+			url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/contents/' + retro_url
+			response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
+			data = response.json()
 
-				when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
-				if (prvWhen is None or prvWhen < when) and when > from_date and when < to_date:
-					prvWhen = when
-					ret[prvWhen.strftime("%Y-%m-%d")] = retro
+			if not('message' in data and 'Not Found' == data['message']):
+				if ret is None:
+					ret={}
+
+				prvWhen = None
+				for retro in data:
+					url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/commits?path=' + retro['path']
+					response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
+					commits = response.json()
+
+					when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
+					if (prvWhen is None or prvWhen < when) and when > from_date and when < to_date:
+						prvWhen = when
+						ret[prvWhen.strftime("%Y-%m-%d")] = retro
 		
 		return ret
 
