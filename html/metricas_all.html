@@ -17,11 +17,30 @@
 				<label>Average Days:</label>
 				<input type="text" name="average" id="average">
 			</div>
+			<div class="filter-item" >
+				<div class="tag-item">
+					<input type="checkbox" id="tags" name="tags" class="tags" value="kind/userstory" checked>
+					<label for="kind/userstory">User Story</label>
+				</div>
+			</div>
+			<div class="filter-item" >
+				<div class="tag-item">
+					<input type="checkbox" id="tags" name="tags" class="tags" value="kind/bug" checked>
+					<label for="kind/userstory">Bug</label>
+				</div>
+			</div>
+			<div class="filter-item" >
+				<div class="tag-item">
+					<input type="checkbox" id="tags" name="tags" class="tags" value="kind/tech" checked>
+					<label for="kind/userstory">Tech</label>
+				</div>
+			</div>
 			<div class="filter-item">
 				<button type="button" name="update" id="update" onclick="printChart();">Update</button>
 			</div>
 		</div>
 		<div id="chartContainerST" class="chart" style="height: 600px;"></div>
+		<div id="chartContainerCL" class="chart" style="height: 600px;"></div>
 		<div id="chartContainerTH" class="chart" style="height: 600px;"></div>
 		<div id="chartContainerLT" class="chart" style="height: 600px;"></div>
 	</body>

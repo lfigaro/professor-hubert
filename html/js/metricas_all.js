@@ -2,17 +2,21 @@ var toDate = new Date()
 var to_date = ""
 var from_date = ""
 var avg = ""
+var tags = ""
 
 var dataPointsST = null;
 var dataPointsTH = null;
 var dataPointsLT = null;
+var dataPointsCL = null;
 
 var farolST = 0
 var farolTH = 0
 var farolLT = 0
+var farolCL = 0
 
 function addData(data) {
 	addDataST(data)
+	addDataCL(data)
 	addDataTH(data)
 	addDataLT(data)
 }
@@ -93,6 +97,84 @@ function addDataST(data) {
 		});
 
 		chartThr.render();
+	}
+}
+
+function addDataCL(data) {
+	var titles = data.tagsTitles;
+	if (titles.length > 0){
+		document.getElementById("chartContainerCL").style.display = "block";
+	}else{
+		document.getElementById("chartContainerCL").style.display = "none";
+	}
+	var dps = data.throughput;
+	var keys = Object.keys(dps);
+	keys.sort();
+	key = keys[keys.length - 1]
+
+	if (dataPointsCL.length == 0){
+		for (var i = 0; i < titles.length; i++) {
+			dataPointsCL.push({
+				type: "stackedColumn100",
+				name: titles[i],
+				showInLegend: "true",
+				markerSize: 0,
+				dataPoints: []
+			})
+		}
+	}
+
+	for (var j = 0; j < titles.length; j++) {
+		dataPointsCL[j].dataPoints.push({
+			//x: farolCL,
+			y: dps[key][2][j],
+			name: data['self.repo.ghrepo'],
+			title: titles[j]
+		});
+	}		
+
+
+	farolCL = farolCL - 1
+
+	if (farolCL == 0){
+		var chartLoad = new CanvasJS.Chart("chartContainerCL", {
+			animationEnabled: true,
+			theme: "dark1",
+			zoomEnabled: true,
+			toolTip:{			 
+					content: "<b>{title}:<b> #percent %"
+					//shared: true
+			},
+			title: {
+				text: "Charge Load"
+			},
+			axisY: {
+				title: "Work %",
+				titleFontSize: 24,
+				crosshair: {
+					enabled: true
+				}
+			},
+			axisX: {
+				crosshair: {
+					enabled: true,
+					snapToDataPoint: true
+				},
+				labelAngle: 270,
+				labelFontSize: 15,
+				interval: 1,
+				labelFormatter: function ( e ) {
+					if (e.chart.data[0].dataPoints[e.value] != null){
+						return e.chart.data[0].dataPoints[e.value].name;
+					} else {
+						return e.value	
+					}
+				}
+			},
+			data: dataPointsCL
+		});
+
+		chartLoad.render();
 	}
 }
 
@@ -251,25 +333,35 @@ function getRepos(data) {
 		fromDate = new Date(toDate)
 		from_date = "&from_date=" + new Date(fromDate.setDate(fromDate.getDate() - parseInt(average))).toISOString().split('T')[0];
 	}
+	var val = [];
+	$(".tags:checked").each(function(i){
+	   val[i] = $(this).val();
+	});
+	if (val.length > 0){
+		tags = '&tags=' + val.toString()
+	}else{
+		var tags = ""	
+	}
 
 	dataPointsST = [];
 	dataPointsTH = [];
 	dataPointsLT = [];
+	dataPointsCL = [];
 
 	farolST = data['repos'].length;
 	farolTH = data['repos'].length;
 	farolLT = data['repos'].length;
+	farolCL = data['repos'].length;
 
 	for (var i = 0; i < data['repos'].length; i++) {
 		url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=closed_issues&squad-repo=" 
-			+ data['repos'][i] + to_date + from_date + avg;
+			+ data['repos'][i] + to_date + from_date + avg + tags;
 
 		$.getJSON(url, addData);
 	}
 }
 
 function printChart(data) {
-
 	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=get_repos&squad-repo=";
 	$.getJSON(url, getRepos);
 }
