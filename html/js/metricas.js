@@ -649,7 +649,7 @@ function printChart() {
 		}
 
 		var keys = Object.keys(data);
-		if (keys != null){
+		if (keys.length > 0){
 			dateFromData = new Date(keys[0] + ' 12:00:00')
 			if (dateFromData > dateFrom){
 				dateFromData = dateFrom
