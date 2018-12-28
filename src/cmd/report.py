@@ -26,11 +26,11 @@ class Report:
 		barsize = 130
 		title = '*' + self.repo.ghrepo + '*'
 		bar = (barsize - len(title)) / 2
-		ret = '\n\n' + ('-' * bar) + title + ('-' * bar) + '\n'
+		ret = '\n\n' + ('_' * bar) + title + ('_' * bar) + '\n'
 
 		title = '*Tempo de espera*'
 		bar = (barsize - len(title)) / 2
-		ret += '\n\n' + ('-' * bar) + title + ('-' * bar) + '\n'
+		ret += '\n\n' + ('_' * bar) + title + ('_' * bar) + '\n'
 		command = Leadtime(self.repo, self.text)
 		setattr(command, 'average', self.average)
 		setattr(command, 'tags', self.tags)
@@ -41,7 +41,7 @@ class Report:
 
 		title = '*Vazão*'
 		bar = (barsize - len(title)) / 2
-		ret += '\n\n' + ('-' * bar) + title + ('-' * bar) + '\n'
+		ret += '\n\n' + ('_' * bar) + title + ('_' * bar) + '\n'
 		command = Throughput(self.repo, self.text)
 		setattr(command, 'average', self.average)
 		setattr(command, 'tags', self.tags)
@@ -52,20 +52,20 @@ class Report:
 
 		title = '*Backlog atual*'
 		bar = (barsize - len(title)) / 2
-		ret += '\n\n' + ('-' * bar) + title + ('-' * bar) + '\n'
+		ret += '\n\n' + ('_' * bar) + title + ('_' * bar) + '\n'
 		command = Open(self.repo, self.text)
 		setattr(command, 'tags', self.tags)
 		ret += command.execute()		
 
 		title = '*Retrospectivas*'
 		bar = (barsize - len(title)) / 2
-		ret += '\n\n' + ('-' * bar) + title + ('-' * bar) + '\n'
+		ret += '\n\n' + ('_' * bar) + title + ('_' * bar) + '\n'
 		command = Retro(self.repo, self.text)
 		ret += command.execute()		
 
 		title = '*FIM*'
 		bar = (barsize - len(title)) / 2
-		ret += '\n\n' + ('-' * bar) + title + ('-' * bar) + '\n'
+		ret += '\n\n' + ('_' * bar) + title + ('_' * bar) + '\n'
 
 
 		return ret
