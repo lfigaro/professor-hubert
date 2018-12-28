@@ -75,7 +75,7 @@ def handler(event, context):
                 if ghrepo is None and hasattr(parser, 'channel_name'):
                     ghrepo = parser.channel_name
 
-                logger.info('ghrepo: ' + ghrepo)
+                logger.info('ghrepo: {}'.format(ghrepo))
                 command = find_command(parser.text, ghrepo)
                 msg = command.execute()
                 ret = get_return(True, parser.send_message(msg))

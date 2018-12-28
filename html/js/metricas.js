@@ -169,7 +169,7 @@ function printChart() {
 				legendText: "Throughput",
 				color: "#3F6BAD",
 				click: function(e){
-					window.open('https://github.com/GrupoZapVivaReal/' + $( "#squad option:selected" ).text() + '/issues?q=is:issue closed:' + e.dataPoint.x.toISOString().split('T')[0]);
+					window.open('https://github.com/grupozap/' + $( "#squad option:selected" ).text() + '/issues?q=is:issue closed:' + e.dataPoint.x.toISOString().split('T')[0]);
 				}
 			}, {
 				type: "line",
@@ -269,7 +269,7 @@ function printChart() {
 				color: "#3F6BAD",
 				toolTipContent: "Issue: {issue}<br>Date: {x}<br>Days: {y}",
 				click: function(e){
-					window.open('https://github.com/GrupoZapVivaReal/' + $( "#squad option:selected" ).text() + '/issues/' + e.dataPoint.issue);
+					window.open('https://github.com/grupozap/' + $( "#squad option:selected" ).text() + '/issues/' + e.dataPoint.issue);
 				}
 			}, {
 				type: "line",
@@ -479,16 +479,6 @@ function printChart() {
 			a = true
 		}
 
-		/*
-		var keys = Object.keys(cfd);
-		keys.sort(function(a, b){
-			var x=new Date(a + ' 12:00:00'),
-				y=new Date(b + ' 12:00:00');
-			return x<y ? -1 : x>y ? 1 : 0;
-		});
-		days = dateTo - dateFrom
-		*/
-
 		results = [0, 0, 0]
 
 		while (dateFrom <= dateTo) {
@@ -634,6 +624,125 @@ function printChart() {
 
 	}
 
+	function addDataRetro(data) {
+		if (data == null){
+			data = {}
+		}
+
+		var dataPoints = [];
+		var dataPoints15 = [];
+		var dataPoints30 = [];
+
+		var dateFrom
+		if (fromDate.value != ""){
+			dateFrom = new Date(fromDate.value + ' 12:00:00')
+		} else {
+			dateFrom = new Date();
+			dateFrom.setDate(dateFrom.getDate()-7);
+		}
+		
+		var dateTo
+		if (toDate.value != ""){
+			dateTo = new Date(toDate.value + ' 12:00:00')
+		} else {
+			dateTo = new Date()
+		}
+
+		var keys = Object.keys(data);
+		if (keys != null){
+			dateFromData = new Date(keys[0] + ' 12:00:00')
+			if (dateFromData > dateFrom){
+				dateFromData = dateFrom
+				retro_influence = -30
+			}
+		} else{
+			dateFromData = dateFrom
+			retro_influence = -30
+		}
+		
+		while (dateFromData <= dateTo) {
+			var key = dateFromData.toISOString().split('T')[0]
+
+			retro = data[key]
+			if (retro != null){
+				retro_influence = 30
+			}else{
+				retro_influence = retro_influence - 1
+			}
+
+			if (dateFromData >= dateFrom && dateFromData <= dateTo){
+				if (retro != null){
+					dataPoints.push({
+						x: new Date(dateFromData),
+						y: (30),
+						date: key,
+						url: retro['html_url']
+					});
+				}
+				dataPoints15.push({
+					x: new Date(dateFromData),
+					y: (retro_influence >= 0 ? retro_influence : 0),
+					name: 'Retro_Influence'
+				});
+
+				dataPoints30.push({
+					x: new Date(dateFromData),
+					y: (retro_influence <= 0 ? retro_influence : 0),
+					name: 'Retro_Influence'
+				});				
+			}
+
+			dateFromData.setDate(new Date(dateFromData.toISOString().split('T')[0] + ' 12:00:00').getDate() + 1);
+		}
+
+		var chart = new CanvasJS.Chart("chartContainerRetro", {
+			animationEnabled: true,
+			theme: "dark1",
+			zoomEnabled: true,
+			title: {
+				text: "Retrospective Mood"
+			},
+			axisY:{
+			   minimum: -30,
+			   maximum: 35,
+			   labelFormatter: function ( e ) {
+				  return '';  
+			   }  
+			},
+			data: [{
+				type: "scatter",
+				dataPoints: dataPoints,
+				connectNullData: true,
+				markerSize: 20,
+				showInLegend: false, 
+				color: "#3F6BAD",
+				toolTipContent: "Date: {date}",
+				click: function(e){
+					window.open(e.dataPoint.url);
+				}
+			}, {
+				type: "area",
+				dataPoints: dataPoints15,
+				showInLegend: true, 
+				markerSize: 0,
+				showInLegend: false, 
+				color: "#3F6BAD",
+				legendText: "15 days",
+			}, {
+				type: "area",
+				dataPoints: dataPoints30,
+				showInLegend: true, 
+				markerSize: 0,
+				showInLegend: false, 
+				color: "#C0392B",
+				legendText: "30 days"
+			}]
+		});
+
+		chart.render();
+	}
+
+
 	function addData(data){
 		addDataThr(data);
 		addDataLT(data);
@@ -694,6 +803,13 @@ function printChart() {
 
 	$.getJSON(url, addDataCFD);
 
+
+	url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=get_retro&squad-repo=" 
+	+ squad;
+
+	$.getJSON(url, addDataRetro);
+
+	/*
 	url = "/data/" + squad + ".json";
 
 	$.getJSON( url ).done(function( json ) {
@@ -702,4 +818,5 @@ function printChart() {
 		var err = textStatus + ", " + error;
 		console.log( "Request Failed: " + err );
 	});
+	*/
 }

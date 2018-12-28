@@ -39,7 +39,18 @@ class Repo:
 		
 		return ret
 
-	def get_retro(self):
+	def get_retro(self, from_date=None, to_date=None):
+		if to_date is None:
+			to_date = datetime.now().replace(hour=23, minute=59, second=59)
+		else:
+			to_date = datetime.strptime(to_date, "%Y-%m-%d")
+		
+		if from_date is None:
+			from_date = datetime.now().replace(hour=00, minute=00, second=00) - timedelta(days=180)
+		else:
+			from_date = datetime.strptime(from_date, "%Y-%m-%d")
+
+
 		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/contents/agl/retro'
 		response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
 		data = response.json()
@@ -54,7 +65,7 @@ class Repo:
 			    commits = response.json()
 
 			    when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
-			    if prvWhen is None or prvWhen < when:
+			    if (prvWhen is None or prvWhen < when) and when > from_date and when < to_date:
 			        prvWhen = when
 		        	ret[prvWhen.strftime("%Y-%m-%d")] = retro
 		
@@ -64,7 +75,7 @@ class Repo:
 		ret = []
 
 		url = 'https://api.github.com/search/repositories?per_page=500&q=org:' + os.environ['gh_organization'] + \
-			  ' chapter OR squad in:name'
+			  ' chapt OR squad in:name'
 
 		while url is not None:
 			response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
