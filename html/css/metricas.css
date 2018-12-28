@@ -86,7 +86,7 @@ select, input {
 	border: 0 !important;  /*Removes border*/
 	-webkit-appearance: none;  /*Removes default chrome and safari style*/
 	-moz-appearance: none; /* Removes Default Firefox style*/
-    appearance:none;
+	appearance:none;
 	background: #0088cc; /*url(img/select-arrow.png) no-repeat 90% center;*/
 	text-indent: 0.01px; /* Removes default arrow from firefox*/
 	text-overflow: "";  /*Removes default arrow from firefox*/ /*My custom style for fonts*/

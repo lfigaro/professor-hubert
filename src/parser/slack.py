@@ -35,11 +35,11 @@ class Slack:
 
 	# Envia uma mensagem no slack como o BOT
 	def send_message(self, message):
-	    self.sc.api_call(
-	      "chat.postMessage",
-	      channel=self.channel,
-	      text=message,
-	      mrkdwn=True
-	    )
+		self.sc.api_call(
+		  "chat.postMessage",
+		  channel=self.channel,
+		  text=message,
+		  mrkdwn=True
+		)
 
-	    return 'message sent in channel ' + self.channel
+		return 'message sent in channel ' + self.channel

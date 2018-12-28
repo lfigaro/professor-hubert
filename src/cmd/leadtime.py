@@ -14,13 +14,15 @@ class Leadtime:
 		self.average = None
 		self.tags = None
 		self.full = None
+		self.from_date = None
+		self.to_date = None
 
 	def execute(self):
 		try:
 			if self.average is None:
 				self.average = self.repo.average
 
-			data = self.repo.closed_issues(average=self.average, tags=self.tags)
+			data = self.repo.closed_issues(average=self.average, tags=self.tags, from_date=self.from_date, to_date=self.to_date)
 
 			if 'message' in data and data['message'] == 'Not Found':
 				return 'Não existe nenhum time *' + self.repo.ghrepo + '* no GitHub. Se deseja o leadtime de outro time, ' + \

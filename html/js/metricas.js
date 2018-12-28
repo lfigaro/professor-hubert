@@ -17,7 +17,7 @@ function getRepos() {
 function getLabels() {
 	function setLabels(data){
 		var container = document.getElementById("tagsContainer");
-	    container.innerHTML = "";
+		container.innerHTML = "";
 
 		var iDiv = document.createElement('div');
 		iDiv.className = 'tags-item';
@@ -321,9 +321,9 @@ function printChart() {
 			animationEnabled: true,
 			theme: "dark1",
 			zoomEnabled: true,
-			toolTip:{             
-			        content: "<b>{name}:<b> #percent %"
-			        //shared: true
+			toolTip:{			 
+					content: "<b>{name}:<b> #percent %"
+					//shared: true
 			},
 			title: {
 				text: "Charge Load"

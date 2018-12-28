@@ -28,14 +28,14 @@ class Repo:
 			ret={}
 			prvWhen = None
 			for apr in data:
-			    url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/commits?path=' + apr['path']
-			    response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
-			    commits = response.json()
+				url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/commits?path=' + apr['path']
+				response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
+				commits = response.json()
 
-			    when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
-			    if prvWhen is None or prvWhen < when:
-			        prvWhen = when
-		        	ret[prvWhen.strftime("%Y-%m-%d")] = apr
+				when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
+				if prvWhen is None or prvWhen < when:
+					prvWhen = when
+					ret[prvWhen.strftime("%Y-%m-%d")] = apr
 		
 		return ret
 
@@ -60,14 +60,14 @@ class Repo:
 			ret={}
 			prvWhen = None
 			for retro in data:
-			    url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/commits?path=' + retro['path']
-			    response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
-			    commits = response.json()
+				url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/commits?path=' + retro['path']
+				response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
+				commits = response.json()
 
-			    when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
-			    if (prvWhen is None or prvWhen < when) and when > from_date and when < to_date:
-			        prvWhen = when
-		        	ret[prvWhen.strftime("%Y-%m-%d")] = retro
+				when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
+				if (prvWhen is None or prvWhen < when) and when > from_date and when < to_date:
+					prvWhen = when
+					ret[prvWhen.strftime("%Y-%m-%d")] = retro
 		
 		return ret
 
@@ -94,23 +94,23 @@ class Repo:
 
 	# Retorna as labels das issues do Repositorio selecionado
 	def get_labels(self):
-	    ret = []
-	    
-	    url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/labels'
+		ret = []
+		
+		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/labels'
 
-	    while url is not None:
-	        response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))  
-	        data = response.json()  
-	        link = response.headers.get('link', None)
-	        if link is not None:
-	            url = next_page(link)
-	        else:
-	            url = None
+		while url is not None:
+			response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))  
+			data = response.json()  
+			link = response.headers.get('link', None)
+			if link is not None:
+				url = next_page(link)
+			else:
+				url = None
 
-	        for label in data:
-	            ret.append(label['name'])
+			for label in data:
+				ret.append(label['name'])
 
-	    return ret
+		return ret
 
 	# Retorna dados das issues abertas
 	def open_issues(self, tags=None):
@@ -368,12 +368,12 @@ def tag_regex(tags):
 	return prog
 
 def next_page(link):
-    matchObj = re.search( r'\<[^<]*?\>; rel="next"', link , re.M|re.I )
-    
-    if matchObj:
-        return matchObj.group().replace('<','').replace('>; rel="next"','')
-    else:
-        return None
+	matchObj = re.search( r'\<[^<]*?\>; rel="next"', link , re.M|re.I )
+	
+	if matchObj:
+		return matchObj.group().replace('<','').replace('>; rel="next"','')
+	else:
+		return None
 
 def mean(data):
 	"""Return the sample arithmetic mean of data."""
