@@ -100,12 +100,42 @@ function addDataST(data) {
 	}
 }
 
+function addTeamsTableDownload(){
+	dataDownload = {};
+	
+	title='squad,coefvar_throughput,coefvar_leadtime'
+	dataPointsST.forEach(function(rowArray){
+	   dataDownload[rowArray.name] = rowArray.x.toString() + ',' + rowArray.y.toString();
+	});
+	if (dataPointsCL != null)
+	dataPointsCL.forEach(function(rowArray){
+		title += ',' + rowArray['name']
+		rowArray.dataPoints.forEach(function(row2Array){
+			if (dataDownload[row2Array.name] != null){
+				dataDownload[row2Array.name] = dataDownload[row2Array.name] + ',' + row2Array.y.toString();
+			}
+		});
+	});
+
+	let csvContent = "data:text/csv;charset=utf-8,";
+	csvContent += title + "\r\n";	
+	var keys = Object.keys(dataDownload);
+	keys.sort();
+	for (var i = 0; i < keys.length; i++) {
+		csvContent += keys[i] + ',' + dataDownload[keys[i]] + "\r\n";	
+	}
+	
+	var encodedUri = encodeURI(csvContent);
+	window.open(encodedUri);
+}
+
 function addDataCL(data) {
 	var titles = data.tagsTitles;
 	if (titles.length > 0){
 		document.getElementById("chartContainerCL").style.display = "block";
 	}else{
 		document.getElementById("chartContainerCL").style.display = "none";
+		dataPointsCL=null;
 	}
 	var dps = data.throughput;
 	var keys = Object.keys(dps);
