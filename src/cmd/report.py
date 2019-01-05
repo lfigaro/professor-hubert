@@ -6,6 +6,7 @@ from leadtime import Leadtime
 from throughput import Throughput
 from open import Open
 from retro import Retro
+from apr import Apr
 import sys
 
 reload(sys)
@@ -61,6 +62,12 @@ class Report:
 		bar = (barsize - len(title)) / 2
 		ret += '\n\n' + ('_' * bar) + title + ('_' * bar) + '\n'
 		command = Retro(self.repo, self.text)
+		ret += command.execute()		
+
+		title = ' *APR* '
+		bar = (barsize - len(title)) / 2
+		ret += '\n\n' + ('_' * bar) + title + ('_' * bar) + '\n'
+		command = Apr(self.repo, self.text)
 		ret += command.execute()		
 
 		title = ' *FIM* '
