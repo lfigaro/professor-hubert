@@ -19,6 +19,16 @@ class Repo:
 		self.retro_relative_urls = config.get('github', 'retro.relative.urls')
 
 	def get_apr(self):
+		if to_date is None:
+			to_date = datetime.now().replace(hour=23, minute=59, second=59)
+		else:
+			to_date = datetime.strptime(to_date, "%Y-%m-%d")
+		
+		if from_date is None:
+			from_date = datetime.now().replace(hour=00, minute=00, second=00) - timedelta(days=180)
+		else:
+			from_date = datetime.strptime(from_date, "%Y-%m-%d")
+
 		url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/contents/agl/apr'
 		response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
 		data = response.json()
@@ -33,7 +43,7 @@ class Repo:
 				commits = response.json()
 
 				when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
-				if prvWhen is None or prvWhen < when:
+				if (prvWhen is None or prvWhen < when) and when > from_date and when < to_date:
 					prvWhen = when
 					ret[prvWhen.strftime("%Y-%m-%d")] = apr
 		
