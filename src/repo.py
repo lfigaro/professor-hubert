@@ -18,7 +18,7 @@ class Repo:
 		self.average = config.getint('github', 'average')
 		self.retro_relative_urls = config.get('github', 'retro.relative.urls')
 
-	def get_apr(self):
+	def get_apr(self, from_date=None, to_date=None):
 		if to_date is None:
 			to_date = datetime.now().replace(hour=23, minute=59, second=59)
 		else:
