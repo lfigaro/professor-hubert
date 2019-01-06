@@ -21,6 +21,7 @@ class Apr:
 	def execute(self):
 		try:
 			docs = self.repo.get_apr()
+			docs = docs['aprs']
 
 			if docs is not None:
 				if self.list is not None:

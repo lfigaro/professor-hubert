@@ -47,7 +47,7 @@ class Repo:
 					prvWhen = when
 					ret[prvWhen.strftime("%Y-%m-%d")] = apr
 		
-		return ret
+		return {'self.repo.ghrepo': self.ghrepo ,'aprs': ret}
 
 	def get_retro(self, from_date=None, to_date=None):
 		if to_date is None:
@@ -82,7 +82,7 @@ class Repo:
 						prvWhen = when
 						ret[prvWhen.strftime("%Y-%m-%d")] = retro
 		
-		return ret
+		return {'self.repo.ghrepo': self.ghrepo ,'retros': ret}
 
 	def get_repos(self):
 		ret = []
