@@ -34,7 +34,7 @@ class Repo:
 		data = response.json()
 
 		ret = None
-		if not('message' in data and 'Not Found' == data['message']):
+		if response.status_code == 200:
 			ret={}
 			prvWhen = None
 			for apr in data:
@@ -67,7 +67,7 @@ class Repo:
 			response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
 			data = response.json()
 
-			if not('message' in data and 'Not Found' == data['message']):
+			if response.status_code == 200:
 				if ret is None:
 					ret={}
 
@@ -293,7 +293,7 @@ class Repo:
 				url = None
 
 			# No caso de erros
-			if 'message' in data and 'Not Found' == data['message']:			
+			if response.status_code != 200:		
 				return data
 
 			prog = tag_regex(tags)

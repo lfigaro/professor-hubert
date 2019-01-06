@@ -8,11 +8,15 @@ var dataPointsST = null;
 var dataPointsTH = null;
 var dataPointsLT = null;
 var dataPointsCL = null;
+var dataPointsRetro = null;
+var dataPointsAPR = null;
 
 var farolST = 0
 var farolTH = 0
 var farolLT = 0
 var farolCL = 0
+var farolRetro = 0
+var farolAPR = 0
 
 function addData(data) {
 	addDataST(data)
@@ -103,17 +107,32 @@ function addDataST(data) {
 function addTeamsTableDownload(){
 	dataDownload = {};
 	
-	title='squad,coefvar_throughput,coefvar_leadtime'
+	title=['squad','cvthroughput','cvleadtime','dtretro','dtapr']
 	dataPointsST.forEach(function(rowArray){
-	   dataDownload[rowArray.name] = rowArray.x.toString() + ',' + rowArray.y.toString();
+		dataDownload[rowArray.name] = {
+			'squad': rowArray.name, 
+			'cvthroughput': rowArray.x.toString(), 
+			'cvleadtime': rowArray.y.toString()
+		}
 	});
+	
+	dataPointsRetro.forEach(function(rowArray){
+		if (dataDownload[rowArray.name] != null){
+			dataDownload[rowArray.name]['dtretro'] = rowArray.dt
+		}
+	});
+
+	dataPointsAPR.forEach(function(rowArray){
+		if (dataDownload[rowArray.name] != null){
+			dataDownload[rowArray.name]['dtapr'] = rowArray.dt
+		}
+	});
+
 	if (dataPointsCL != null)
 	dataPointsCL.forEach(function(rowArray){
-		title += ',' + rowArray['name']
+		title.push(rowArray['name']);
 		rowArray.dataPoints.forEach(function(row2Array){
-			if (dataDownload[row2Array.name] != null){
-				dataDownload[row2Array.name] = dataDownload[row2Array.name] + ',' + row2Array.y.toString();
-			}
+			dataDownload[row2Array.name][rowArray['name']]=row2Array.y.toString();
 		});
 	});
 
@@ -122,7 +141,11 @@ function addTeamsTableDownload(){
 	var keys = Object.keys(dataDownload);
 	keys.sort();
 	for (var i = 0; i < keys.length; i++) {
-		csvContent += keys[i] + ',' + dataDownload[keys[i]] + "\r\n";	
+		values =[]
+		title.forEach(function(rowArray){
+			values.push(dataDownload[keys[i]][rowArray])
+		});
+		csvContent += values + "\r\n";	
 	}
 	
 	var encodedUri = encodeURI(csvContent);
@@ -154,14 +177,16 @@ function addDataCL(data) {
 		}
 	}
 
-	for (var j = 0; j < titles.length; j++) {
-		dataPointsCL[j].dataPoints.push({
-			//x: farolCL,
-			y: dps[key][2][j],
-			name: data['self.repo.ghrepo'],
-			title: titles[j]
-		});
-	}		
+	if (dps[key][0][0] > 0){
+		for (var j = 0; j < titles.length; j++) {
+			dataPointsCL[j].dataPoints.push({
+				//x: farolCL,
+				y: dps[key][2][j],
+				name: data['self.repo.ghrepo'],
+				title: titles[j]
+			});
+		}
+	}
 
 
 	farolCL = farolCL - 1
@@ -237,11 +262,13 @@ function addDataTH(data) {
 
 	farolTH = farolTH - 1
 
-	dataPointsTH.push({
-		//x: farolTH,
-		y: yRec,
-		name: squadName
-	});
+	if (yRec[0]!=0 || yRec[1]!=0 || yRec[2]!=0 || yRec[3]!=0){
+		dataPointsTH.push({
+			//x: farolTH,
+			y: yRec,
+			name: squadName
+		});
+	}
 
 	if (farolTH == 0){
 		var chartThr = new CanvasJS.Chart("chartContainerTH", {
@@ -309,11 +336,13 @@ function addDataLT(data) {
 
 	farolLT = farolLT - 1
 
-	dataPointsLT.push({
-		//x: farolTH,
-		y: yRec,
-		name: squadName
-	});
+	if (yRec[0]!=null || yRec[1]!=null || yRec[2]!=null || yRec[3]!=null){
+		dataPointsLT.push({
+			//x: farolTH,
+			y: yRec,
+			name: squadName
+		});
+	}
 
 	if (farolLT == 0){
 		var chartThr = new CanvasJS.Chart("chartContainerLT", {
@@ -351,6 +380,121 @@ function addDataLT(data) {
 	}
 }
 
+function addDataRetro(data) {
+	var ret = data['retros'];
+
+	if (ret != null){
+		var keys = Object.keys(ret);
+		keys.sort();
+
+		if (keys.length > 0){
+			key = keys[keys.length - 1]
+			dt1 = new Date(key + ' 12:00:00')
+			dt2 = new Date()
+
+			var timeDiff = Math.abs(dt1.getTime() - dt2.getTime());
+			var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
+
+			dataPointsRetro.push({
+				y: diffDays, 
+				name: data['self.repo.ghrepo'], 
+				dt: key
+			})
+		}
+	}
+
+	farolRetro = farolRetro - 1
+
+	if (farolRetro == 0){
+		var chartRetro = new CanvasJS.Chart("chartContainerRetro", {
+			animationEnabled: true,
+			theme: "dark1",
+			title: {
+				text: "Retrospective"
+			},
+			axisX: {
+				labelAngle: 270,
+				labelFontSize: 15,
+				interval: 1,
+				labelFormatter: function ( e ) {
+					if (e.chart.data[0].dataPoints[e.value] != null){
+						return e.chart.data[0].dataPoints[e.value].name;
+					} else {
+						return e.value	
+					}
+				} 
+			},
+			data: [{
+				type: "column",
+				dataPoints: dataPointsRetro,
+				showInLegend: true, 
+				markerSize: 0,
+				showInLegend: false, 
+				legendText: "days since last retrospective"
+			}]
+		});
+
+		chartRetro.render();
+	}
+}
+
+function addDataAPR(data) {
+	var ret = data['aprs'];
+
+	if (ret != null){
+		var keys = Object.keys(ret);
+		keys.sort();
+
+		if (keys.length > 0){
+			key = keys[keys.length - 1]
+			dt1 = new Date(key + ' 12:00:00')
+			dt2 = new Date()
+
+			var timeDiff = Math.abs(dt1.getTime() - dt2.getTime());
+			var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
+
+			dataPointsAPR.push({
+				y: diffDays, 
+				name: data['self.repo.ghrepo'], 
+				dt: key
+			})
+		}
+	}
+
+	farolAPR = farolAPR - 1
+
+	if (farolAPR == 0){
+		var chartApr = new CanvasJS.Chart("chartContainerApr", {
+			animationEnabled: true,
+			theme: "dark1",
+			title: {
+				text: "APR"
+			},
+			axisX: {
+				labelAngle: 270,
+				labelFontSize: 15,
+				interval: 1,
+				labelFormatter: function ( e ) {
+					if (e.chart.data[0].dataPoints[e.value] != null){
+						return e.chart.data[0].dataPoints[e.value].name;
+					} else {
+						return e.value	
+					}
+				} 
+			},
+			data: [{
+				type: "column",
+				dataPoints: dataPointsAPR,
+				showInLegend: true, 
+				markerSize: 0,
+				showInLegend: false, 
+				legendText: "days since last retrospective"
+			}]
+		});
+
+		chartApr.render();
+	}
+}
 
 function getRepos(data) {
 	if ($("#toDate").val() != ""){
@@ -377,17 +521,35 @@ function getRepos(data) {
 	dataPointsTH = [];
 	dataPointsLT = [];
 	dataPointsCL = [];
+	dataPointsRetro = [];
+	dataPointsAPR = [];
 
 	farolST = data['repos'].length;
 	farolTH = data['repos'].length;
 	farolLT = data['repos'].length;
 	farolCL = data['repos'].length;
+	farolRetro = data['repos'].length;
+	farolAPR = data['repos'].length;
 
 	for (var i = 0; i < data['repos'].length; i++) {
 		url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=closed_issues&squad-repo=" 
 			+ data['repos'][i] + to_date + from_date + avg + tags;
 
 		$.getJSON(url, addData);
+	}
+
+	for (var i = 0; i < data['repos'].length; i++) {
+		url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=get_retro&squad-repo=" 
+			+ data['repos'][i] + to_date;
+
+		$.getJSON(url, addDataRetro);
+	}
+
+	for (var i = 0; i < data['repos'].length; i++) {
+		url = "https://cxiew7bdgh.execute-api.us-east-1.amazonaws.com/agile/prod-agile-professor-hubert?source=html&action=get_apr&squad-repo=" 
+			+ data['repos'][i] + to_date;
+
+		$.getJSON(url, addDataAPR);
 	}
 }
 
