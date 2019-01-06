@@ -23,6 +23,7 @@ class Retro:
 	def execute(self):
 		try:
 			docs = self.repo.get_retro(from_date=self.from_date, to_date=self.to_date)
+			docs = docs['retros']
 
 			if docs is not None:
 				if self.list is not None:
