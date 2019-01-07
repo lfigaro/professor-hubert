@@ -36,14 +36,13 @@ class Repo:
 		ret = None
 		if response.status_code == 200:
 			ret={}
-			prvWhen = None
 			for apr in data:
 				url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/commits?path=' + apr['path']
 				response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
 				commits = response.json()
 
 				when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
-				if (prvWhen is None or prvWhen < when) and when > from_date and when < to_date:
+				if when >= from_date and when <= to_date:
 					prvWhen = when
 					ret[prvWhen.strftime("%Y-%m-%d")] = apr
 		
@@ -71,14 +70,13 @@ class Repo:
 				if ret is None:
 					ret={}
 
-				prvWhen = None
 				for retro in data:
 					url = 'https://api.github.com/repos/' + os.environ['gh_organization'] + '/' + self.ghrepo + '/commits?path=' + retro['path']
 					response = requests.get(url, auth=(os.environ['user'], os.environ['pass']))
 					commits = response.json()
 
 					when = datetime.strptime(commits[0]['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
-					if (prvWhen is None or prvWhen < when) and when > from_date and when < to_date:
+					if when >= from_date and when <= to_date:
 						prvWhen = when
 						ret[prvWhen.strftime("%Y-%m-%d")] = retro
 		
@@ -250,7 +248,10 @@ class Repo:
 			to_date = datetime.strptime(to_date, "%Y-%m-%d")
 		
 		if from_date is None:
-			from_date = datetime.now().replace(hour=00, minute=00, second=00) - timedelta(days=average)
+			if to_date is None:
+				from_date = datetime.now().replace(hour=00, minute=00, second=00) - timedelta(days=average)
+			else:
+				from_date = to_date - timedelta(days=(average-1))	
 		else:
 			from_date = datetime.strptime(from_date, "%Y-%m-%d")
 
