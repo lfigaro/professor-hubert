@@ -132,7 +132,9 @@ function addTeamsTableDownload(){
 	dataPointsCL.forEach(function(rowArray){
 		title.push(rowArray['name']);
 		rowArray.dataPoints.forEach(function(row2Array){
-			dataDownload[row2Array.name][rowArray['name']]=row2Array.y.toString();
+			if (dataDownload[rowArray.name] != null){
+				dataDownload[row2Array.name][rowArray['name']]=row2Array.y.toString();
+			}
 		});
 	});
 
