@@ -10,7 +10,7 @@ Professor is your agile robot sidekick. Also it is an character of the formidabl
 
 ## No seriously, what is Professor Hubert?
 
-We wrote the first version of Professor to automate our company agile metrics based on GitHub flow control. Professor Hubert knew importat team information such as leadtime, throughput, prediction on the current backlog based on current leadtime, last (actually all) retrospectives team made...OAh, and he gives you important tips about agile in general :-)
+We wrote the first version of Professor to automate our company agile metrics based on GitHub flow control. Professor Hubert knew important team information such as leadtime, throughput, prediction on the current backlog based on current leadtime, last (actually all) retrospectives team made...OAh, and he gives you important tips about agile in general :-)
 
 Today's version of Professor Hubert is open source, written in Python, and easily deployed on platforms like AWS lambda. More importantly, Professor Hubert is a very simple application for you to create your own commands.
 
