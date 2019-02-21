@@ -153,9 +153,14 @@ class Repo:
 					dateCurrent = datetime.now()
 					delta = dateCurrent - dateCreated
 
+					assignee = None
+					if issue['assignee'] is not None:
+						assignee = issue['assignee']['login']
+
 					issues.append({'issue': issue['number'], 
 									'created_at': issue['created_at'],
-									'leadtime': delta.days})
+									'leadtime': delta.days,
+									'assignee': assignee})
 
 					leadtime.append(delta.days)
 
