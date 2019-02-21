@@ -26,7 +26,7 @@ class Wip:
 			wipList = {}
 			for issue in issues['openIssues']:
 				if issue['assignee'] is not None:
-					if list is None:
+					if self.list is None:
 						wip += 1
 
 					else:
