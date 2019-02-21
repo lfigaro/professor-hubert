@@ -36,7 +36,7 @@ class Wip:
 							wipList[issue['assignee']] = 1
 
 			ret = None
-			if list is None:
+			if self.list is None:
 				ret = 'O time tem ' + str(wip) + ' items em progresso.\n'
 			else:
 				ret = 'Items atribuidos:\n'
