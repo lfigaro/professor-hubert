@@ -60,7 +60,7 @@ Oh well, don't worry, this is simple too. Follow the installation steps:
 
 ## Credits
 
-Grupo ZAP engineering team (<https://github.com/grupozap>) created this!
+I created this when working on Grupo ZAP (<https://github.com/grupozap>).
 
 Contributors:
 
