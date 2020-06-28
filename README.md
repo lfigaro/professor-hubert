@@ -1,11 +1,11 @@
-# professor-hubert
+# Romário BOT
 
-## What is Professor Hubert?
+## O que é o Romário?
 
-Professor is your agile robot sidekick. Also it is an character of the formidable cartoon "Futurama" <3
+É um bot que pretende integrar o Google Analytics ao nosso slack para trazer, de forma fácil, informações de negócio :-)
 
 <p align="center">
-<img align="center" src="./html/img/professor-hubert-character.png">
+<img align="center" src="./html/img/romario.png" alt="É isso ai, peixe!">
 </p>
 
 ## No seriously, what is Professor Hubert?
