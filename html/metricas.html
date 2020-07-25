@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Agile Metrics</title>
+		<link href="css/metricas.css" rel="stylesheet">
+		<script src="https://canvasjs.com/assets/script/jquery-1.11.1.min.js"></script>
+		<script src="https://canvasjs.com/assets/script/jquery.canvasjs.min.js"></script>
+		<script src="js/metricas.js"></script>
+	</head>
+	<body onload="getRepos()">
+		<div class="filter">
+			<div class="filter-item">
+				<label>Squad:</label>
+				<select id="squad" name="squad" onchange="getLabels();" >
+					<option value="" disabled selected>Select Squad...</option>
+				</select>
+			</div><div class="filter-item">
+				<label>Since:</label>
+				<input type="date" name="fromDate" id="fromDate">
+			</div>
+			<div class="filter-item">
+				<label>Until:</label>
+				<input type="date" name="toDate" id="toDate">
+			</div>
+			<div class="filter-item">
+				<label>Average Days:</label>
+				<input type="text" name="average" id="average">
+			</div>
+			<div class="filter-item">
+				<button type="button" name="update" id="update" onclick="printChart();">Update</button>
+			</div>
+			<div class="filter-item">
+				<label name="tagsFilter" id="tagsFilter" onclick="showHideTags()">Tags ></label>
+			</div>
+
+		</div>
+		<div id="tagsContainer" class="tagsContainer"></div>
+		<div id="chartContainerThr" class="chart"></div>
+		<div id="chartContainerLT" class="chart"></div>
+		<div id="chartContainerLoad" class="chart"></div>
+		<div id="chartContainerLtHist" class="chart"></div>
+		<div id="chartContainerCFD" class="chart"></div>
+		<!--div id="chartContainerTagsDistribution" class="chart"></div-->
+		<div id="chartContainerRetro" class="chart"></div>
+		<div id="chartContainerApr" class="chart"></div>
+	</body>
+</html>   
